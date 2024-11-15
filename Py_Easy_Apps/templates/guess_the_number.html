@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number Guessing Game</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        #message, #high-scores { margin-top: 20px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <h1>Number Guessing Game</h1>
+    <p>Enter your guess (1-100):</p>
+    <input type="number" id="guess-input" min="1" max="100">
+    <button onclick="submitGuess()">Submit</button>
+    <button onclick="resetGame()">Play Again</button>
+
+    <div id="message"></div>
+    <div id="high-scores" class="hidden">
+        <h2>High Scores</h2>
+        <div id="scores-list"></div>
+    </div>
+    <div id="name-entry" class="hidden">
+        <p>New High Score! Enter your initials (3 characters):</p>
+        <input type="text" id="name-input" maxlength="3">
+        <button onclick="submitName()">Submit Name</button>
+    </div>
+
+    <script>
+        async function resetGame() {
+            await fetch('/reset', { method: 'POST' });
+            document.getElementById("message").textContent = "";
+            document.getElementById("high-scores").classList.add("hidden");
+            document.getElementById("name-entry").classList.add("hidden");
+        }
+
+        async function submitGuess() {
+            const guess = document.getElementById("guess-input").value;
+            const response = await fetch('/guess', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ guess })
+            });
+            const data = await response.json();
+            document.getElementById("message").textContent = data.message;
+
+            if (data.correct) {
+                await loadHighScores();
+                if (data.high_score) {
+                    document.getElementById("name-entry").classList.remove("hidden");
+                }
+            }
+        }
+
+        async function submitName() {
+            const name = document.getElementById("name-input").value;
+            if (name.length === 3) {
+                await fetch('/submit_name', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                document.getElementById("name-entry").classList.add("hidden");
+                await loadHighScores();
+            }
+        }
+
+        async function loadHighScores() {
+            const response = await fetch('/high_scores');
+            const data = await response.json();
+            const scoresList = document.getElementById("scores-list");
+            scoresList.innerHTML = data.high_scores.map(
+                (score, index) => `<p>${index + 1}. ${score[0]}: ${score[1]} guesses</p>`
+            ).join('');
+            document.getElementById("high-scores").classList.remove("hidden");
+        }
+
+        window.onload = loadHighScores;
+    </script>
+</body>
+</html>
