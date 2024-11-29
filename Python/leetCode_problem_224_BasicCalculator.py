@@ -3,7 +3,7 @@ from typing import List
 class Solution:
     def calculate(self, s: str) -> int:
         stack = []
-        curr_res,curr_num = 0,0
+        curr_res,curr_num = 0, 0
         sign = 1
         for i in range(len(s)):
 
